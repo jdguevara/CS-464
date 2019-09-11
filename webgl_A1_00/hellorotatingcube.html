@@ -367,7 +367,11 @@ function startHelloWebGL()
         if (lastTime != 0) {
             var elapsed = timeNow - lastTime;
 
-            // Animation here
+            // Increase y-axis rotation by one elapsed time unit - Jaime Guevara
+            //yRot += elapsed;
+
+			// Previous rotation was a tad too fast just do it a bit at a time - JG
+			yRot++;
         }
         lastTime = timeNow;
     }
@@ -388,7 +392,7 @@ function startHelloWebGL()
 <!-- the onload attribute specifies a javascript function to execute when the body tag is loaded into the browser -->
 
 <body onload="startHelloWebGL()">
-<h1>Hello WebGL Simple Example</h1>
+<h1>Hello WebGL Simple Example - Solution #1: Rotating Cube</h1>
 
 <!-- embed the HTML5 Canvas Drawing object on the page.-->
 <!-- Name the canvas 'hellowebgl' for the javascript code. -->

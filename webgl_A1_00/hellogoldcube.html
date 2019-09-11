@@ -179,6 +179,8 @@ function initGeometry()
         cubeVertexPositionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
         vertices = [
+        	/* All faces will only need three vertices, except for the bottom face - Jaime Guevara */
+
             // Front face
             -1.0, -1.0,  1.0,
              1.0, -1.0,  1.0,
@@ -190,6 +192,7 @@ function initGeometry()
             -1.0,  1.0, -1.0,
              1.0,  1.0, -1.0,
              1.0, -1.0, -1.0,
+
 
             // Top face
             -1.0,  1.0, -1.0,
@@ -231,7 +234,7 @@ function initGeometry()
           // Back face
           1.0, 0.0,
           1.0, 1.0,
-           0.0, 1.0,
+		  0.0, 1.0,
           0.0, 0.0,
 
           // Top face
@@ -265,12 +268,14 @@ function initGeometry()
         cubeVertexIndexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
         var cubeVertexIndices = [
+
             0, 1, 2,      0, 2, 3,    // Front face
             4, 5, 6,      4, 6, 7,    // Back face
             8, 9, 10,     8, 10, 11,  // Top face
             12, 13, 14,   12, 14, 15, // Bottom face
             16, 17, 18,   16, 18, 19, // Right face
             20, 21, 22,   20, 22, 23  // Left face
+
         ];
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeVertexIndices), gl.STATIC_DRAW);
         cubeVertexIndexBuffer.itemSize = 1;
@@ -288,7 +293,9 @@ function initTextures()
       handleLoadedTexture(exTexture)
     }
 
-    exTexture.image.src = "box.png"; // Original box texture
+    // This is where textures files need to be passed - Jaime Guevara
+    //exTexture.image.src = "box.png"; // Original box texture
+	exTexture.image.src = "gold.png"; // Custom texture (looks better on pyramid)- JG
   }
 
 function handleLoadedTexture(texture)
@@ -315,7 +322,7 @@ function startHelloWebGL()
    initGeometry();
    initTextures();
 
-   gl.clearColor(0.4,0.4,0.4,1.0); // Set background to sky blue - JG
+   gl.clearColor(0.4,0.4,0.4,1.0);
    gl.enable(gl.DEPTH_TEST);
    // Draw the Scene
    Frames();
@@ -367,7 +374,8 @@ function startHelloWebGL()
         if (lastTime != 0) {
             var elapsed = timeNow - lastTime;
 
-            // Animation here
+            // Increase y-axis rotation by one elapsed unit - Jaime Guevara
+			//yRot++;
         }
         lastTime = timeNow;
     }
@@ -388,7 +396,7 @@ function startHelloWebGL()
 <!-- the onload attribute specifies a javascript function to execute when the body tag is loaded into the browser -->
 
 <body onload="startHelloWebGL()">
-<h1>Hello WebGL Simple Example</h1>
+<h1>Hello WebGL Simple Example - Solution #3a: Gold Texture</h1>
 
 <!-- embed the HTML5 Canvas Drawing object on the page.-->
 <!-- Name the canvas 'hellowebgl' for the javascript code. -->

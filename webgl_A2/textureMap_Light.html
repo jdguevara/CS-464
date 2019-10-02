@@ -2,38 +2,68 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
-	<title>Hello WebGL</title>
+	<title>WebGL Assignment 2</title>
 	<meta name="generator" content="BBEdit 10.5" />
 
 <!-- load matrix manipulation helper methods -->	
 <script type="text/javascript" src="glMatrix_util.js"></script>
 <script type="text/javascript" src="webgl-utils.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+<script type="text/javascript" src="a2.js"></script>
 
 <!-- define our shaders -->
 <script id="shader-fs" type="x-shader/x-fragment">
     precision mediump float;
 
     varying vec2 vTextureCoord;
+    varying vec3 vLightWeighting; // rgb color from lights.
 
     uniform sampler2D uSampler;
 
     void main(void) {
-        gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+        vec4 tx_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+        // select color and simply scale by the lighint from ambient and direction.
+        gl_FragColor = vec4(tx_FragColor.rgb * vLightWeighting, tx_FragColor.a);
     }
 </script>
 
 <script id="shader-vs" type="x-shader/x-vertex">
     attribute vec3 aVertexPosition;
+    attribute vec3 aVertexNormal;
     attribute vec2 aTextureCoord;
 
     uniform mat4 uMVMatrix;
     uniform mat4 uPMatrix;
 
     varying vec2 vTextureCoord;
+    varying vec3 nVertexPosition;
+    uniform sampler2D uSampler;
+    varying vec4 clrVec;
+    varying vec4 nclrVec;
+
+
+    // lighting components
+    uniform mat3 uNMatrix;
+    uniform vec3 uAmbientColor;  // ambient light
+    uniform vec3 uLightingDirection; // directional light
+    uniform vec3 uDirectionalColor; // color of directional light
+    varying vec3 vLightWeighting;
 
     void main(void) {
-        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        // modify the height of the terrain
+        nVertexPosition[0] = aVertexPosition[0];
+        nVertexPosition[1] = 0.5;
+        nVertexPosition[2] = aVertexPosition[2];
         vTextureCoord = aTextureCoord;
+        clrVec = texture2D(uSampler,vTextureCoord);
+        nclrVec = normalize(clrVec);
+        nVertexPosition[1] = sqrt(nclrVec[0]*nclrVec[0] + nclrVec[1]*nclrVec[1]+nclrVec[2]*nclrVec[2]);
+        gl_Position = uPMatrix * uMVMatrix * vec4(nVertexPosition, 1.0);
+
+        // here we calculate the lighting information from vertex.
+       vec3 testNormal = aVertexNormal;
+       float directionalLightWeighting = max(dot(testNormal, uLightingDirection), 0.0);
+       vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;
     }
 </script>
 
@@ -136,6 +166,13 @@ function initGLScene()
         shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
         shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
         shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+
+        // Handle the lighting
+		shaderProgram.tnMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
+		shaderProgram.useLightingUniform = gl.getUniformLocation(shaderProgram, "uUseLighting");
+		shaderProgram.ambientColorUniform = gl.getUniformLocation(shaderProgram, "uAmbientColor");
+		shaderProgram.lightingDirectionUniform = gl.getUniformLocation(shaderProgram, "uLightingDirection");
+		shaderProgram.directionalColorUniform = gl.getUniformLocation(shaderProgram, "uDirectionalColor");
     }
 
 
@@ -163,6 +200,12 @@ function setMatrixUniforms()
 {
         gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
         gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+
+		// lighting controls for normals
+		var normalMatrix = mat3.create();
+		mat4.toInverseMat3(mvMatrix, normalMatrix);
+		mat3.transpose(normalMatrix);
+		gl.uniformMatrix3fv(shaderProgram.tnMatrixUniform, false, normalMatrix);
 }
 
 
@@ -177,17 +220,30 @@ function initGeometry()
  {
         vertexPositionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
-        vertices = [];
+        var vertices = [];
+        var nvertices = []; // Normal vertices for lighting
         for (var i = 0; i < 100; i++) {
         	for (var j = 0; j < 100; j++) {
 				vertices[0 + (j*3) + (i*100*3)] = (j*1.0)/50.0 - 1.0;
 				vertices[1 + (j*3) + (i*100*3)] = Math.random()/10.0;
 				vertices[2 + (j*3) + (i*100*3)] = (i*1.0)/50.0 - 1.0;
+
+				nvertices[0 + j*3 + (i*100*3)] = 0.0; // Lighting is 0 in the x-direction
+				nvertices[1 + j*3 + (i*100*3)] = 1.0; // Lighting is 1 in the y-direction
+				nvertices[2 + j*3 + (i*100*3)] = 0.0; // Lighting is 0 in the z-direction
 			}
 		}
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
         vertexPositionBuffer.itemSize = 3;
         vertexPositionBuffer.numItems = 100 * 100;
+
+        // Bind the normals for the light to its own buffer - JG
+        terNormalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, terNormalBuffer);
+
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(nvertices), gl.STATIC_DRAW);
+        terNormalBuffer.itemSize = 3;
+        terNormalBuffer.numItems = 100*100;
 
         vertexTextureCoordBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexTextureCoordBuffer);
@@ -275,59 +331,97 @@ function startHelloWebGL()
 // then we define our View positions for our camera using WebGL matrices.
 // OpenGL has convenience methods for this such as glPerspective().
 // finally we call the gl draw methods to draw our defined geometry objects.
-   var xRot = 0;
-    var yRot = 0;
-    var zRot = 0;
+var xRot = 0;
+var yRot = 0;
+var zRot = 0;
 
-    function drawScene() {
-        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+function drawScene() {
+	gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+	mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
 
-        mat4.identity(mvMatrix);
+	mat4.identity(mvMatrix);
 
-        mat4.translate(mvMatrix, [0.0, 0.0, -5.0]);
+	mat4.translate(mvMatrix, [0.0, 0.0, -5.0]);
+	// handle the mouse controlled object rotation
+	//mat4.multiply(mvMatrix,objRotationMatrix);
+	mat4.rotate(mvMatrix, xRot / 180.0 * 3.1415, [1, 0, 0]);
 
-		mat4.rotate(mvMatrix, xRot/180.0*3.1415, [1, 1, 0]); // Set object to rotate about y-axis
+	gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
-        gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexTextureCoordBuffer);
-        gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, vertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+	// bind in the Normals for lighting
+	gl.bindBuffer(gl.ARRAY_BUFFER, terNormalBuffer);
+	gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, terNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, exTexture);
-        gl.uniform1i(shaderProgram.samplerUniform, 0);
+	// bind the texture vertex coordinates
+	gl.bindBuffer(gl.ARRAY_BUFFER, vertexTextureCoordBuffer);
+	gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, vertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vertexIndexBuffer);
-        setMatrixUniforms();
-        gl.drawElements(gl.TRIANGLES, vertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
-    }
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D, exTexture);
+	gl.uniform1i(shaderProgram.useLightingUniform, true);
+
+	// Setting up the ambience - JG
+	gl.uniform3f(
+			shaderProgram.ambientColorUniform,
+			// Set the RGB values to the same, that way no one light overpowers the others - JG
+			0.8,
+			0.8,
+			0.8
+	);
+
+	// Which way will our light come from? Well we can set it from here - JG
+	var lightingDirection = [
+		0.0,
+		-1.0,
+		0.0
+	];
+	console.log(lightingDirection[1]);
+
+	var adjustedLD = vec3.create();
+	vec3.normalize(lightingDirection, adjustedLD);
+	vec3.scale(adjustedLD, -1);
+	gl.uniform3fv(shaderProgram.lightingDirectionUniform, adjustedLD);
+
+	// Color direction? - Here you go!
+	gl.uniform3f(
+			shaderProgram.directionalColorUniform,
+			0.2,
+			0.2,
+			0.2
+	);
+
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vertexIndexBuffer);
+	setMatrixUniforms();
+	gl.drawElements(gl.TRIANGLES, vertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+	mat4.translate(mvMatrix, [0.0, 0.0, 0.0]);
+
+}
 
 
     var lastTime = 0;
 
-    function animate() {
-        var timeNow = new Date().getTime();
-        if (lastTime != 0) {
-            var elapsed = timeNow - lastTime;
+	function animate() {
+		var timeNow = new Date().getTime();
+		if (lastTime != 0) {
+			var elapsed = timeNow - lastTime;
 
-            // Animation here
-			xRot += 0.5;
-        }
-        lastTime = timeNow;
-    }
-
-
-    function Frames() {
-        requestAnimFrame(Frames);
-        drawScene();
-        animate();
-    }
+			xRot += (90 * elapsed) / 1000.0;
+			yRot += (20 * elapsed) / 1000.0;
+			zRot = 25.0;
+		}
+		lastTime = timeNow;
+	}
 
 
+	function Frames() {
+		requestAnimFrame(Frames);
+		drawScene();
+		animate();
+	}
 </script>
 
 </head>

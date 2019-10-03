@@ -275,7 +275,7 @@ function initTextures()
         handleLoadedTexture(exTexture)
     }
 
-    exTexture.image.src = "box.png"; // Original box texture
+    exTexture.image.src = "box.png";
 }
 
 /**
@@ -365,9 +365,9 @@ function drawScene() {
     gl.uniform3f(
         shaderProgram.ambientColorUniform,
         // Set the RGB values to the same, that way no one light overpowers the others
-        0.8,
-        0.8,
-        0.8
+        0.5,
+        0.5,
+        0.5
     );
 
     // Which way will our light come from? Well we can set it from here
@@ -377,16 +377,16 @@ function drawScene() {
         0.0
     ];
 
-    // Adjust the light direction
+    // Adjust the color direction
     var adjustedLD = vec3.create();
     vec3.normalize(lightingDirection, adjustedLD);
     vec3.scale(adjustedLD, -1);
     gl.uniform3fv(shaderProgram.lightingDirectionUniform, adjustedLD);
     gl.uniform3f(
         shaderProgram.directionalColorUniform,
-        0.2,
-        0.2,
-        0.2
+        0.0,
+        2.0,
+        0.0
     );
 
     // Finish binding lights to buffer

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>WebGL Assignment 2</title>
+	<meta name="generator" content="BBEdit 10.5" />
+
+	<script type="text/javascript" src="glMatrix_util.js"></script>
+	<script type="text/javascript" src="webgl-utils.js"></script>
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+	<script type="text/javascript" src="Guevara_WebGLA2.js"></script>
+
+	<!-- define our shaders -->
+	<script id="shader-fs" type="x-shader/x-fragment">
+		precision mediump float;
+
+		varying vec2 vTextureCoord;
+		varying vec3 vLightWeighting; // rgb color from lights.
+
+		uniform sampler2D uSampler;
+
+		void main(void) {
+			vec4 tx_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+			// select color and simply scale by the lighint from ambient and direction.
+			gl_FragColor = vec4(tx_FragColor.rgb * vLightWeighting, tx_FragColor.a);
+		}
+	</script>
+	<script id="shader-vs" type="x-shader/x-vertex">
+		attribute vec3 aVertexPosition;
+		attribute vec3 aVertexNormal;
+		attribute vec2 aTextureCoord;
+
+		uniform mat4 uMVMatrix;
+		uniform mat4 uPMatrix;
+
+		varying vec2 vTextureCoord;
+		varying vec3 nVertexPosition;
+		uniform sampler2D uSampler;
+		varying vec4 clrVec;
+		varying vec4 nclrVec;
+
+
+		// lighting components
+		uniform mat3 uNMatrix;
+		uniform vec3 uAmbientColor;  // ambient light
+		uniform vec3 uLightingDirection; // directional light
+		uniform vec3 uDirectionalColor; // color of directional light
+		varying vec3 vLightWeighting;
+
+		void main(void) {
+			// modify the height of the terrain
+			nVertexPosition[0] = aVertexPosition[0];
+			nVertexPosition[1] = 0.5;
+			nVertexPosition[2] = aVertexPosition[2];
+			vTextureCoord = aTextureCoord;
+			clrVec = texture2D(uSampler,vTextureCoord);
+			nclrVec = normalize(clrVec);
+			nVertexPosition[1] = sqrt(nclrVec[0]*nclrVec[0] + nclrVec[1]*nclrVec[1]+nclrVec[2]*nclrVec[2]);
+			gl_Position = uPMatrix * uMVMatrix * vec4(nVertexPosition, 1.0);
+
+			// here we calculate the lighting information from vertex.
+		   vec3 testNormal = aVertexNormal;
+		   float directionalLightWeighting = max(dot(testNormal, uLightingDirection), 0.0);
+		   vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;
+		}
+	</script>
+</head>
+
+<!-- declare the "body" of the HTML document-->
+<!-- the onload attribute specifies a javascript function to execute when the body tag is loaded into the browser -->
+
+<body onload="startHelloWebGL()">
+<h1>Hello WebGL Simple Example</h1>
+
+<!-- embed the HTML5 Canvas Drawing object on the page.-->
+<!-- Name the canvas 'hellowebgl' for the javascript code. -->
+<canvas id="hellowebgl" width=640 height=480>
+If you're seeing this your web browser doesn't support the &lt;canvas>&gt; element. Ouch!
+</canvas>
+
+</body>
+</html>

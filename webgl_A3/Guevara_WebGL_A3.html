@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
@@ -278,72 +278,70 @@
 		 * create and initialize our geometry objects
 		 */
 		function initGeometry() {
-			vertexPositionBuffer = gl.createBuffer();
-			gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
-			var vertices = [];
-			var normalVertices = []; // Normal vertices for lighting
+            vertexPositionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+            var vertices = [];
+            var normalVertices = []; // Normal vertices for lighting
 
-			// Set up 100 x 100 Grid
-			for (var i = 0; i < 256; i++) {
-				for (var j = 0; j < 256; j++) {
-					vertices[0 + (j*3) + (i*256*3)] = (j*1.0)/50.0 - 1.0; // x-axis vertices
-					vertices[1 + (j*3) + (i*256*3)] = Math.random()/10.0; // y-axis vertices
-					vertices[2 + (j*3) + (i*256*3)] = (i*1.0)/50.0 - 1.0; // z-axis vertices
+            // Set up 100 x 100 Grid
+            for (var i = 0; i < 100; i++) {
+                for (var j = 0; j < 100; j++) {
+                    vertices[0 + (j*3) + (i*100*3)] = (j*1.0)/50.0 - 1.0; // x-axis vertices
+                    vertices[1 + (j*3) + (i*100*3)] = Math.random()/10.0; // y-axis vertices
+                    vertices[2 + (j*3) + (i*100*3)] = (i*1.0)/50.0 - 1.0; // z-axis vertices
 
-					normalVertices[0 + j*3 + (i*256*3)] = 0.0; // Lighting is 0 in the x-direction
-					normalVertices[1 + j*3 + (i*256*3)] = 1.0; // Lighting is 1 in the y-direction
-					normalVertices[2 + j*3 + (i*256*3)] = 0.0; // Lighting is 0 in the z-direction
-				}
-			}
-			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-			vertexPositionBuffer.itemSize = 3;
-			vertexPositionBuffer.numItems = 256 * 256; //TODO: scaling the image may come down to making this grid the size of the image (i.e. 100x100 -> imgX x imgY)
+                    normalVertices[0 + j*3 + (i*100*3)] = 0.0; // Lighting is 0 in the x-direction
+                    normalVertices[1 + j*3 + (i*100*3)] = 1.0; // Lighting is 1 in the y-direction
+                    normalVertices[2 + j*3 + (i*100*3)] = 0.0; // Lighting is 0 in the z-direction
+                }
+            }
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+            vertexPositionBuffer.itemSize = 3;
+            vertexPositionBuffer.numItems = 100 * 100;
 
-			// Bind the normals for the light to its own buffer - JG
-			normalVertexBuffer = gl.createBuffer();
-			gl.bindBuffer(gl.ARRAY_BUFFER, normalVertexBuffer);
+            // Bind the normals for the light to its own buffer - JG
+            normalVertexBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, normalVertexBuffer);
 
-			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalVertices), gl.STATIC_DRAW);
-			normalVertexBuffer.itemSize = 3;
-			normalVertexBuffer.numItems = 256*256;  //TODO: adjust to texture image size
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalVertices), gl.STATIC_DRAW);
+            normalVertexBuffer.itemSize = 3;
+            normalVertexBuffer.numItems = 100*100;
 
-			vertexTextureCoordBuffer = gl.createBuffer();
-			gl.bindBuffer(gl.ARRAY_BUFFER, vertexTextureCoordBuffer);
-			var textureCoords = [];
-			var tCount = 0;
+            vertexTextureCoordBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexTextureCoordBuffer);
+            var textureCoords = [];
+            var tCount = 0;
 
-			// Loop over the grid size -1, so as to not go "over" (should change depending on the grid/image size) - JG
-			for (i = 0; i < 255; i++) {
-				for (j = 0; j < 255; j++) {
-					textureCoords[tCount++] = 0.0 + (j*1.0)/256.0; // X-textures (divided by grid size)
-					textureCoords[tCount++] = 0.0 + (i*1.0)/256.0; // Z-textures
-				}
-			}
-			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
-			vertexTextureCoordBuffer.itemSize = 2;
-			vertexTextureCoordBuffer.numItems = tCount/2; // TODO: see how dividing these changes things
+            for (i = 0; i < 100; i++) {
+                for (j = 0; j < 100; j++) {
+                    textureCoords[tCount++] = 0.0 + (j*1.0)/100.0; // X-textures
+                    textureCoords[tCount++] = 0.0 + (i*1.0)/100.0; // Z-textures
+                }
+            }
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
+            vertexTextureCoordBuffer.itemSize = 2;
+            vertexTextureCoordBuffer.numItems = tCount;
 
-			vertexIndexBuffer = gl.createBuffer();
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vertexIndexBuffer);
-			var vertexIndices = [];
-			var tVertIndex = 0;
+            vertexIndexBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vertexIndexBuffer);
+            var vertexIndices = [];
+            var tVertIndex = 0;
 
-			// The indices need to just go up to the point before everything wraps
-			//TODO: change the iterations to loop over the size-1 of the texture image
-			for (i = 0; i < 255; i++) {
-				for (j = 0; j < 255; j++) {
-					vertexIndices[tVertIndex++] = j + (i*256);
-					vertexIndices[tVertIndex++] = j + 1 + (i*256);
-					vertexIndices[tVertIndex++] = j + ((i + 1) * 256);
+            // The indices need to just go up to the point before everything wraps
+            for (i = 0; i < 99; i++) {
+                for (j = 0; j < 99; j++) {
+                    vertexIndices[tVertIndex++] = j + (i*100);
+                    vertexIndices[tVertIndex++] = j + 1 + (i*100);
+                    vertexIndices[tVertIndex++] = j + ((i + 1) * 100);
 
-					vertexIndices[tVertIndex++] = j + i*256;
-					vertexIndices[tVertIndex++] = j + 1 + (i+1)*256;
-					vertexIndices[tVertIndex++] = j + (i+1)*256;
-				}
-			}
-			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(vertexIndices), gl.STATIC_DRAW);
-			vertexIndexBuffer.itemSize = 1;
-			vertexIndexBuffer.numItems = tVertIndex;
+                    vertexIndices[tVertIndex++] = j + i*100;
+                    vertexIndices[tVertIndex++] = j + 1 + (i+1)*100;
+                    vertexIndices[tVertIndex++] = j + (i+1)*100;
+                }
+            }
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(vertexIndices), gl.STATIC_DRAW);
+            vertexIndexBuffer.itemSize = 1;
+            vertexIndexBuffer.numItems = tVertIndex;
 		}
 
 		/**
@@ -356,7 +354,7 @@
 				handleLoadedTexture(exTexture)
 			};
 
-			exTexture.image.src = "box.png";
+			exTexture.image.src = "gold.png";
 		}
 
 		/**
@@ -365,23 +363,37 @@
 		 * @param texture
 		 */
 		function handleLoadedTexture(texture) {
-			var imgWidth = texture.image.width;
-			var imgHeight = texture.image.height;
-			var gridPixels = new Uint8Array(4 * imgWidth * imgHeight);
-			var frameBuffer = gl.createFramebuffer();
+		    gl.bindTexture(gl.TEXTURE_2D, texture);
+		    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
-			gl.bindTexture(gl.TEXTURE_2D, texture);
-			gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-			gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+		    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+		    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+			var width = texture.image.width;
+			var height = texture.image.height;
+			// Allocate Memory
+			var Gpixels = new Uint8Array(4 * width * height);
+
+			const framebuffer = gl.createFramebuffer();
+			gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+			gl.viewport(0, 0, width, height);
+			if (gl.isFramebuffer(framebuffer) == false) {
+			    alert("Bind Failed FrameBuffer not valid");
+            }
+
 			gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-			gl.readPixels(0, 0, imgWidth, imgHeight, gl.RGBA, gl.UNSIGNED_BYTE, gridPixels);
-			loaded = true; // This is the flag to let the machine know if the texture is loaded (would've helped in A2) - JG
+			console.log(gl.checkFramebufferStatus(gl.FRAMEBUFFER), gl.FRAMEBUFFER_COMPLETE);
+
+			if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE) {
+			    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, Gpixels);
+            } else {
+			    alert("Framebuffer Read Failed");
+            }
+			loaded = 1; // This is the flag to let the machine know if the texture is loaded (would've helped in A2) - JG
 
 			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-			gl.deleteFramebuffer(frameBuffer);
+			gl.deleteFramebuffer(framebuffer);
 		}
 
 		/**
@@ -394,24 +406,21 @@
 
 			// Initialize variables for the camera
 			speed = 0.0;
-			loaded = false;
+			loaded = 0;
 			cameraView = mat4.create();
-			cameraDirection = [0.0, 0.0, 0.0]; // TODO: See how changing the Z-values by 0.1 affects the camera
+			cameraDirection = [0.0, 0.0, 0.1]; // TODO: See how changing the Z-values by 0.1 affects the camera
 			cameraAngle = 0.0; // Helps us to position the "view" of the camera
-			cameraTranslate = [0.0, 0.0, 0.0]; // TODO: See how changing the Y-values by 0.1 changes the translation
+			cameraTranslate = [0.0, 0.1, 0.0]; // TODO: See how changing the Y-values by 0.1 changes the translation
 			cameraTip = mat4.create();
 			mat4.identity(cameraTip);
-			cameraVMat = mat4.lookAt([0.0, 0.01, 0.0], [1.0, 0.01, 0.0], [0.0, 1.0, 0.0]);
+			cameraVMat = mat4.lookAt([0.0, 0.001, 0.0], [0.0, 0.001, 1.0], [0.0, 1.0, 0.0]);
 			cameraImage = new Image();
 			cameraNormal = [0.0, 1.0, 0.0];
 
 			// now build basic geometry objects.
 			initShaders();
 			initGeometry();
-			initTextures();/*.done(function () {
-				// Once done set the image loaded flag to true
-				imgLoaded = true;
-			});*/
+			initTextures();
 
 			gl.clearColor(0.4,0.4,0.4,1.0); // Set background to sky blue - JG
 			gl.enable(gl.DEPTH_TEST);
@@ -419,6 +428,7 @@
 			// Add event listeners for when the mouse is no longer on our canvas prior to calling our Frames
 			document.addEventListener('mouseup', canvasUnclick);
 			document.addEventListener('mousemove', rotateObject);
+			document.addEventListener('keypress', moveCamera);
 			//TODO: Add listeners for controlling the camera, use the directional keys to move forward and backward instead of the scroll
 			//TODO: Use the side keys to rotate side to side
 
@@ -447,8 +457,8 @@
 			mat4.identity(mvMatrix);
 
 			// Adjust camera view
-			genViewMatrix();
-			mat4.multiply(mvMatrix, cameraVMat);
+			aviewmatrix = genViewMatrix();
+			mat4.multiply(mvMatrix, aviewmatrix);
 
 			// How far in each axis do we want to move the matrix points
 			mat4.translate(mvMatrix, [0.0, 0.0, -5.0]);
@@ -504,9 +514,9 @@
 			gl.uniform3fv(shaderProgram.lightingDirectionUniform, adjustedLD);
 			gl.uniform3f(
 					shaderProgram.directionalColorUniform,
-					0.0,
-					2.0,
-					0.0
+					0.7,
+                    0.7,
+                    0.7
 			);
 
 			// Finish binding lights to buffer
@@ -526,9 +536,27 @@
 			drawScene();
 		}
 
+        // this function creates a view matrix using the javascript mat4 library.
+        // the mat4.lookAt function is used which calculates the Model Space
+        // to View space transformation matrix
+        function genViewMatrix()
+        {
+            // the lookAt function requires three parameters:
+            //  an eyepos - this is a vec3 variable where the camera is in world coords.
+            // a target - this is the point your camera is looking at.
+            // an Up vector - this specifies the direction for the top of your camera
+
+            eyepos = [0.0, 0.4, 0.0];   // camera slight above the origin.
+            target = [0.0, 0.4, -1.0];  // Camera looking straight down Z axis
+            up = [0.0, 1.0, 0.0]; // the UP vector for the camera is simply straight up.
+
+
+            aviewmatrix = mat4.lookAt(eyepos,target,up);
+            return aviewmatrix;
+        }
+
 		/**
 		 * Sets permission for dragging our object if mouse button is clicked
-		 * TODO: In the event handler try to make it so that it only recognizes the left mouse button for this
 		 */
 		function canvasClick() {
 			drag = true;
@@ -542,6 +570,37 @@
 		}
 
 		/**
+         * Adjusting the camera side to side
+		 */
+        function moveCamera(e){
+            var keynum;
+
+            if(window.event) { // IE
+                keynum = e.keyCode;
+            } else if(e.which){ // Netscape/Firefox/Opera
+                keynum = e.which;
+            }
+    
+            var move = String.fromCharCode(keynum);
+            switch (move) {
+                case 'w':
+                    console.log('forward');
+                    break;
+                case 'a':
+                    console.log('left');
+                    break;
+                case 's':
+                    console.log('back');
+                    break;
+                case 'd':
+                    console.log('right');
+                    break;
+            }
+
+            //alert(String.fromCharCode(keynum));
+        }
+
+		/**
 		 * Handles the event of object rotation by checking if we have permission
 		 * and by utilizing the JavaScript movement methods
 		 *
@@ -550,8 +609,8 @@
 		function rotateObject(event) {
 			if (drag) {
 				// Set the new values for our X and Y rotations
-				yRot += event.movementY * 0.5;
-				xRot += event.movementX * 0.5;
+				yRot += event.movementY * 0.05;
+				xRot += event.movementX * 0.05;
 			}
 		}
 

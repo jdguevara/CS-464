@@ -83,6 +83,10 @@
 		var vertexTextureCoordBuffer;
 		var vertexIndexBuffer;
 
+		// Mouse X or Y
+        var mouseX = null;
+        var mouseY = null;
+
 		// Texture variable
 		var exTexture;
 
@@ -97,18 +101,19 @@
 
 		// Flag for determining when our texture is loaded (suggested by Dr. Cutchin) - JG
 		//var imgLoaded = false;
+        var Gpixels;
 
 		// Camera variables for handling the speed, texture loading, view, angle, etc.
 		var speed;
 		var loaded;
-		var cameraView;
-		var cameraDirection;
+		// var cameraView;
+		var eyepos;
 		var cameraAngle;
 		var cameraTranslate;
-		var cameraTip;
+		// var cameraTip;
 		var cameraVMat;
 		var cameraImage;
-		var cameraNormal;
+		var up;
 
 		/**
 		 * Initialize the webGL context (A.K.A. the canvas)
@@ -126,7 +131,7 @@
 
 				// Add listeners to the canvas
 				canvas.addEventListener('mousedown', canvasClick);
-				canvas.addEventListener('wheel', zoom);
+				canvas.addEventListener('wheel', speed);
 			}
 			catch(e) {}
 
@@ -283,21 +288,23 @@
             var vertices = [];
             var normalVertices = []; // Normal vertices for lighting
 
-            // Set up 100 x 100 Grid
-            for (var i = 0; i < 100; i++) {
-                for (var j = 0; j < 100; j++) {
-                    vertices[0 + (j*3) + (i*100*3)] = (j*1.0)/50.0 - 1.0; // x-axis vertices
-                    vertices[1 + (j*3) + (i*100*3)] = Math.random()/10.0; // y-axis vertices
-                    vertices[2 + (j*3) + (i*100*3)] = (i*1.0)/50.0 - 1.0; // z-axis vertices
+            // Set up 100 x 100 Grid // TODO: This should be set to the size of the texture
+            for (var i = 0; i < 256; i++) {
+                for (var j = 0; j < 256; j++) {
+                    vertices[0 + (j*3) + (i*256*3)] = (j*1.0)/50.0 - 1.0; // x-axis vertices
+                    // eyeX = vertices[0 + (j*3) + (i*100*3)];
+                    vertices[1 + (j*3) + (i*256*3)] = Math.random()/10.0; // y-axis vertices
+                    // eyeY = vertices[1 + (j*3) + (i*100*3)];
+                    vertices[2 + (j*3) + (i*256*3)] = (i*1.0)/50.0 - 1.0; // z-axis vertices
 
-                    normalVertices[0 + j*3 + (i*100*3)] = 0.0; // Lighting is 0 in the x-direction
-                    normalVertices[1 + j*3 + (i*100*3)] = 1.0; // Lighting is 1 in the y-direction
-                    normalVertices[2 + j*3 + (i*100*3)] = 0.0; // Lighting is 0 in the z-direction
+                    normalVertices[0 + j*3 + (i*256*3)] = 0.0; // Lighting is 0 in the x-direction
+                    normalVertices[1 + j*3 + (i*256*3)] = 1.0; // Lighting is 1 in the y-direction
+                    normalVertices[2 + j*3 + (i*256*3)] = 0.0; // Lighting is 0 in the z-direction
                 }
             }
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
             vertexPositionBuffer.itemSize = 3;
-            vertexPositionBuffer.numItems = 100 * 100;
+            vertexPositionBuffer.numItems = 256 * 256;
 
             // Bind the normals for the light to its own buffer - JG
             normalVertexBuffer = gl.createBuffer();
@@ -305,17 +312,17 @@
 
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalVertices), gl.STATIC_DRAW);
             normalVertexBuffer.itemSize = 3;
-            normalVertexBuffer.numItems = 100*100;
+            normalVertexBuffer.numItems = 256*256;
 
             vertexTextureCoordBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, vertexTextureCoordBuffer);
             var textureCoords = [];
             var tCount = 0;
 
-            for (i = 0; i < 100; i++) {
-                for (j = 0; j < 100; j++) {
-                    textureCoords[tCount++] = 0.0 + (j*1.0)/100.0; // X-textures
-                    textureCoords[tCount++] = 0.0 + (i*1.0)/100.0; // Z-textures
+            for (i = 0; i < 256; i++) {
+                for (j = 0; j < 256; j++) {
+                    textureCoords[tCount++] = 0.0 + (j*1.0)/256.0; // X-textures
+                    textureCoords[tCount++] = 0.0 + (i*1.0)/256.0; // Z-textures
                 }
             }
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
@@ -328,15 +335,15 @@
             var tVertIndex = 0;
 
             // The indices need to just go up to the point before everything wraps
-            for (i = 0; i < 99; i++) {
-                for (j = 0; j < 99; j++) {
-                    vertexIndices[tVertIndex++] = j + (i*100);
-                    vertexIndices[tVertIndex++] = j + 1 + (i*100);
-                    vertexIndices[tVertIndex++] = j + ((i + 1) * 100);
+            for (i = 0; i < 255; i++) {
+                for (j = 0; j < 255; j++) {
+                    vertexIndices[tVertIndex++] = j + (i*256);
+                    vertexIndices[tVertIndex++] = j + 1 + (i*256);
+                    vertexIndices[tVertIndex++] = j + ((i + 1) * 256);
 
-                    vertexIndices[tVertIndex++] = j + i*100;
-                    vertexIndices[tVertIndex++] = j + 1 + (i+1)*100;
-                    vertexIndices[tVertIndex++] = j + (i+1)*100;
+                    vertexIndices[tVertIndex++] = j + i*256;
+                    vertexIndices[tVertIndex++] = j + 1 + (i+1)*256;
+                    vertexIndices[tVertIndex++] = j + (i+1)*256;
                 }
             }
             gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(vertexIndices), gl.STATIC_DRAW);
@@ -349,12 +356,13 @@
 		 */
 		function initTextures() {
 			exTexture = gl.createTexture();
-			exTexture.image = new Image();
+            exTexture.image = cameraImage;
+			// exTexture.image = new Image();
 			exTexture.image.onload = function() {
 				handleLoadedTexture(exTexture)
 			};
 
-			exTexture.image.src = "gold.png";
+			exTexture.image.src = "terrain.png";
 		}
 
 		/**
@@ -373,7 +381,7 @@
 			var width = texture.image.width;
 			var height = texture.image.height;
 			// Allocate Memory
-			var Gpixels = new Uint8Array(4 * width * height);
+			Gpixels = new Uint8Array(4 * width * height);
 
 			const framebuffer = gl.createFramebuffer();
 			gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
@@ -383,7 +391,7 @@
             }
 
 			gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-			console.log(gl.checkFramebufferStatus(gl.FRAMEBUFFER), gl.FRAMEBUFFER_COMPLETE);
+			// console.log(gl.checkFramebufferStatus(gl.FRAMEBUFFER), gl.FRAMEBUFFER_COMPLETE);
 
 			if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE) {
 			    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, Gpixels);
@@ -407,15 +415,15 @@
 			// Initialize variables for the camera
 			speed = 0.0;
 			loaded = 0;
-			cameraView = mat4.create();
-			cameraDirection = [0.0, 0.0, 0.1]; // TODO: See how changing the Z-values by 0.1 affects the camera
+			// cameraView = mat4.create();
+			eyepos = [0.0, 0.4, -1.0];
 			cameraAngle = 0.0; // Helps us to position the "view" of the camera
-			cameraTranslate = [0.0, 0.1, 0.0]; // TODO: See how changing the Y-values by 0.1 changes the translation
-			cameraTip = mat4.create();
-			mat4.identity(cameraTip);
-			cameraVMat = mat4.lookAt([0.0, 0.001, 0.0], [0.0, 0.001, 1.0], [0.0, 1.0, 0.0]);
+			cameraTranslate = [0.0, 0.4, 0.0];
+			// cameraTip = mat4.create();
+			// mat4.identity(cameraTip);
+			cameraVMat = mat4.lookAt([0.0, 0.01, 0.0], [0.0, 0.01, 1.0], [0.0, 1.0, 0.0]);
 			cameraImage = new Image();
-			cameraNormal = [0.0, 1.0, 0.0];
+			up = [0.0, 1.0, 0.0];
 
 			// now build basic geometry objects.
 			initShaders();
@@ -429,10 +437,10 @@
 			document.addEventListener('mouseup', canvasUnclick);
 			document.addEventListener('mousemove', rotateObject);
 			document.addEventListener('keypress', moveCamera);
-			//TODO: Add listeners for controlling the camera, use the directional keys to move forward and backward instead of the scroll
-			//TODO: Use the side keys to rotate side to side
+			document.addEventListener('keyup', stopMoving);
+			//TODO: Use the side keys to move side to side
 
-			// TODO: Try to implement a flag that checks to see if the image for our texture has been loaded prior to drawing
+			// TODO: Try to implement a flag that checks to see if the image for our texture has been loaded prior to drawing (tried but it didn't work)
 			// Draw the Scene, after checking that the loaded is true
 			//if (imgLoaded) {
 				Frames();
@@ -451,21 +459,21 @@
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 			// Set the camera perspective
-			mat4.perspective(cameraZoom, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+			mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
 
 			// Identify the matrix to use
 			mat4.identity(mvMatrix);
 
 			// Adjust camera view
-			aviewmatrix = genViewMatrix();
-			mat4.multiply(mvMatrix, aviewmatrix);
+			genViewMatrix();
+			mat4.multiply(mvMatrix, cameraVMat);
 
 			// How far in each axis do we want to move the matrix points
-			mat4.translate(mvMatrix, [0.0, 0.0, -5.0]);
+			// mat4.translate(mvMatrix, [0.0, 0.0, -5.0]);
 
 			// Handle rotation in the specified matrices (convert to radians and specify axis)
-			mat4.rotate(mvMatrix, xRot / 45.0 * 3.1415, [0, 1, 0]); // If we move our mouse in the x-direction, rotate around Y
-			mat4.rotate(mvMatrix, yRot / 45.0 * 3.1415, [1, 0, 0]); // If we move our mouse in the y-direction, rotate around X
+			// mat4.rotate(mvMatrix, xRot / 45.0 * 3.1415, [0, 1, 0]); // If we move our mouse in the x-direction, rotate around Y
+			// mat4.rotate(mvMatrix, yRot / 45.0 * 3.1415, [1, 0, 0]); // If we move our mouse in the y-direction, rotate around X
 
 			// Bind the buffer to our context
 			gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
@@ -474,22 +482,26 @@
 			// bind in the Normals for lighting
 			gl.bindBuffer(gl.ARRAY_BUFFER, normalVertexBuffer);
 			gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, normalVertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
 			gl.bindBuffer(gl.ARRAY_BUFFER, vertexTextureCoordBuffer);
 			gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, vertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
 			gl.activeTexture(gl.TEXTURE0);
 			gl.bindTexture(gl.TEXTURE_2D, exTexture);
+
+			// Light Uniforms
 			gl.uniform1i(shaderProgram.samplerUniform, 0);
 			gl.uniform1i(shaderProgram.samplerUniform, 0);
 			gl.uniform1i(shaderProgram.useLightingUniform, true);
 
-			// bind the texture vertex coordinates
+			/*// bind the texture vertex coordinates
 			gl.bindBuffer(gl.ARRAY_BUFFER, vertexTextureCoordBuffer);
-			gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, vertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+			gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, vertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);*/
 
-			// Activate texture bind it to our context and set the lighting uniforms
+			/*// Activate texture bind it to our context and set the lighting uniforms
 			gl.activeTexture(gl.TEXTURE0);
 			gl.bindTexture(gl.TEXTURE_2D, exTexture);
-			gl.uniform1i(shaderProgram.useLightingUniform, true);
+			gl.uniform1i(shaderProgram.useLightingUniform, true);*/
 
 			// Setting up the ambience
 			gl.uniform3f(
@@ -503,7 +515,7 @@
 			// Which way will our light come from? Well we can set it from here
 			var lightingDirection = [
 				0.0,
-				-1.0,
+				10.0,
 				0.0
 			];
 
@@ -523,7 +535,7 @@
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vertexIndexBuffer);
 			setMatrixUniforms();
 			gl.drawElements(gl.TRIANGLES, vertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
-//    mat4.translate(mvMatrix, [0.0, 0.0, 0.0]);
+            //    mat4.translate(mvMatrix, [0.0, 0.0, 0.0]);
 		}
 
 		/**
@@ -536,30 +548,13 @@
 			drawScene();
 		}
 
-        // this function creates a view matrix using the javascript mat4 library.
-        // the mat4.lookAt function is used which calculates the Model Space
-        // to View space transformation matrix
-        function genViewMatrix()
-        {
-            // the lookAt function requires three parameters:
-            //  an eyepos - this is a vec3 variable where the camera is in world coords.
-            // a target - this is the point your camera is looking at.
-            // an Up vector - this specifies the direction for the top of your camera
-
-            eyepos = [0.0, 0.4, 0.0];   // camera slight above the origin.
-            target = [0.0, 0.4, -1.0];  // Camera looking straight down Z axis
-            up = [0.0, 1.0, 0.0]; // the UP vector for the camera is simply straight up.
-
-
-            aviewmatrix = mat4.lookAt(eyepos,target,up);
-            return aviewmatrix;
-        }
-
 		/**
 		 * Sets permission for dragging our object if mouse button is clicked
 		 */
-		function canvasClick() {
+		function canvasClick(event) {
 			drag = true;
+            mouseX = event.clientX;
+            mouseY = event.clientY;
 		}
 
 		/**
@@ -580,24 +575,42 @@
             } else if(e.which){ // Netscape/Firefox/Opera
                 keynum = e.which;
             }
-    
+
+            //TODO: This will require some further thought, as based on the camera position I'll need to decide what's "right" and "left"
             var move = String.fromCharCode(keynum);
             switch (move) {
                 case 'w':
-                    console.log('forward');
+                    //console.log('forward');
+                    speed = 0.001; // From the speed() function I saw that this was a good "walking" speed
                     break;
                 case 'a':
                     console.log('left');
                     break;
                 case 's':
-                    console.log('back');
+                    //console.log('back');
+                    speed = -0.001;
                     break;
                 case 'd':
                     console.log('right');
                     break;
             }
+        }
 
-            //alert(String.fromCharCode(keynum));
+        function stopMoving(e) {
+            var keynum;
+
+            if(window.event) { // IE
+                keynum = e.keyCode;
+            } else if(e.which){ // Netscape/Firefox/Opera
+                keynum = e.which;
+            }
+
+            var stop = String.fromCharCode(keynum);
+
+            // Decided to include the uppercase letters because I may want to employ a "run" function later
+            if (stop == 'w' || stop == 'W' || stop == 's' || stop == 'S') {
+                speed = 0.0;
+            }
         }
 
 		/**
@@ -609,10 +622,205 @@
 		function rotateObject(event) {
 			if (drag) {
 				// Set the new values for our X and Y rotations
-				yRot += event.movementY * 0.05;
-				xRot += event.movementX * 0.05;
+				// yRot += event.movementY * 0.01;
+				// xRot += event.movementX * 0.01;
+                var newX = event.clientX;
+                var newY = event.clientY;
+
+                var deltaX = newX - mouseX;
+
+                // adjust the view direction
+                cameraAngle = cameraAngle + deltaX;
+
+                mouseX = newX;
+                mouseY = newY;
 			}
 		}
+
+        /**
+         *  Generate the view matrix, this will take the place of what we used to manually
+         *  change with our drawScene() rotates and translates
+         */
+        function genViewMatrix() {
+            // eyepos = [xRot, yRot, 0.0];   // camera slight above the origin.
+            // up = [0.0, 1.0, 0.0]; // the UP vector for the camera is simply straight up.
+
+            // Move the camera before anything //TODO: map this to the WASD keys
+            cameraTranslate[0] = cameraTranslate[0] + (speed * eyepos[0]); // This is the x-direction
+            cameraTranslate[2] = cameraTranslate[2] + (speed * eyepos[2]); // This is the z-direction
+
+            //adjust the height based on the terrain
+            cameraTranslate[1] = getTerHeight(cameraTranslate[0],cameraTranslate[2]);; // Y-direction
+
+            // get Normal for current position
+            var curNormal = getNormal(cameraTranslate[0],cameraTranslate[2]);
+
+            // Need to get the camera direction based on where we're facing
+            eyepos = getCameraDirection(curNormal);
+
+            // now we compute the point the camera is looking at
+            var target = [0.0, 0.0, 0.0];  // Camera looking straight down Z axis
+            target[0] = cameraTranslate[0] + eyepos[0]; // X-direction
+            target[1] = cameraTranslate[1] + eyepos[1]/50.0; // Y-direction
+            target[2] = cameraTranslate[2] + eyepos[2]; // Z-direction
+
+            mat4.identity(cameraVMat);
+            // Where we want to lookAt based on our calculated values
+            aviewmatrix = mat4.lookAt(cameraTranslate, target, curNormal, cameraVMat);
+            return aviewmatrix;
+        }
+
+        // extract the normal for the triangle containing the x,z position.
+        function getNormal(x, z) {
+            var newNormal = vec3.create(); // This is our regular normal vector
+
+            // Set up the three directions of our normal
+            newNormal[0] = 0.0;
+            newNormal[1] = 1.0;
+            newNormal[2] = 0.0;
+
+            // what is our step size in x to find other coordinate
+            var stepsize = 10.0/256.0 ;
+            var triangleHeight = getTriHeight(x,z);
+
+            // now we can calculate the normal
+            anotherNormal = [0, 1, 0];
+
+            var dir1 = vec3.create();
+            var dir2 = vec3.create();
+            var dir3 = vec3.create();
+
+            // Values for dir1 - height
+            dir1[0] = 0.0;
+            dir1[1] = triangleHeight[0];
+            dir1[2] = 0.0;
+
+            // Values for dir2 - change in height w/ motion in X (i.e. change in x)
+            dir2[0] = stepsize; // Stepsize in X
+            dir2[1] = triangleHeight[1]; // This will determine our normal w/ respect to Y
+            dir2[2] = 0.0;
+
+            // Values for dir3 - change in height w/ motion in Y (i.e. change in z)
+            dir3[0] = 0;
+            dir3[1] = triangleHeight[2];
+            dir3[2] = stepsize;
+
+            // Resultants of our change
+            var dir21 = vec3.subtract(dir2, dir1);
+            var dir31 = vec3.subtract(dir3, dir1);
+            var resultant = vec3.cross(dir21, dir31);
+
+            // Normalize the vector (i.e. keep it pointing in the same direction)
+            resultant = vec3.normalize(resultant);
+
+            up = resultant;
+            return resultant;
+        }
+
+        // Get the camera direction based on where we're looking at and our normal
+        function getCameraDirection(normal) {
+            // Set up a rotation matrix
+            var rotationMatrix = mat4.create();
+            mat4.identity(rotationMatrix);
+            mat4.rotate(rotationMatrix, -(cameraAngle * Math.PI / 180), normal);
+
+            // Calculate the direction we're on in the triangle
+            var direction = -(normal[0] * cameraTranslate[0]
+                + normal[1] * cameraTranslate[1]
+                + normal[2] * cameraTranslate[2]);
+
+            var deltaY = -(direction+normal[0]*cameraTranslate[0]
+                + normal[2]*(cameraTranslate[2]+10.0))/normal[1];
+
+            // Set our directions in X, Y, Z
+            var adir = vec3.create();
+            adir[0] = 0.0; // No change in the X
+            adir[1] = deltaY - cameraTranslate[1]; // Y-change (height)
+            adir[2] = 10.0; // Z-change
+
+            // Rotate our direction on the triangle we're on
+            adir = vec3.normalize(adir);
+            adir = mat4.multiplyVec3(rotationMatrix,adir);
+
+            return adir;
+        }
+
+        /**
+         * Gets the height of the current triangle where the camera is situated
+         *
+         * @param x - the x-coordinate of where the camera is on the grid
+         *        z - the z-coordinate where the camera is on the grid
+         */
+        function getTriHeight(x,z) {
+            //First we calculate the index into the Image array
+            // adjust range of x and z to texture size
+            x = Math.floor((x+1)/2.0 * cameraImage.width);
+            z = Math.floor((z+1)/2.0 * cameraImage.height);
+
+            // Set our limit to the image height/width
+            if (x >= cameraImage.width) x = cameraImage.width;
+            if (z >= cameraImage.height) z = cameraImage.height;
+
+            var resbase = 0.09;
+            var res = vec3.create();
+            if (loaded == 1) {
+                // Loop throgh our directions X, Y, Z
+                for (i = 0; i < 3; i++) {
+                    var aoffset;
+
+                    // X-direction offset
+                    if (i == 0) {
+                        aoffset = Math.round(x * 4 + z*cameraImage.width*4);
+                    }
+                    // Y-direction offset
+                    if (i == 1) {
+                        aoffset = Math.round((x+1) * 4 + z*cameraImage.width*4);
+                    }
+                    // Z-direction offset
+                    if (i == 2) {
+                        aoffset = Math.round(x * 4 + (z+1)*cameraImage.width*4);
+                    }
+
+                    // Set our RGB values based on what we've calculated for our Gpixels
+                    var r = Gpixels[0 + aoffset];
+                    var g = Gpixels[1 + aoffset];
+                    var b = Gpixels[2 + aoffset];
+
+                    // Since RGB can be seen as a vector, then we get its distance by sqrt(r^2, g^2, and b^2)
+                    var aval = Math.sqrt(Math.pow(r, 2) + Math.pow(g, 2) + Math.pow(b, 2))/442.0;
+                    aval = aval*2.5*2.0/10.0;
+                    res[i] = resbase + aval; // Set each of res direction values as their base plus the curr value
+                }
+            }
+            return res;
+        }
+
+        // this function returns the height of the terrain for a given, x,z position.
+        // x and z are in the range [-1,1].
+        function getTerHeight(x,z) {
+            //First we calculate the index into the Image array
+            // adjust range of x and z to texture size
+            x = Math.floor((x+1)/2.0 * cameraImage.width);
+            z = Math.floor((z+1)/2.0 * cameraImage.height);
+            if (x >= cameraImage.width) x = cameraImage.width;
+            if (z >= cameraImage.height) z = cameraImage.height;
+
+
+            var res = 0.09;
+            if (loaded == 1)
+            {
+                var aoffset = Math.round(x * 4 + z*cameraImage.width*4);
+                var r = Gpixels[0 + aoffset];
+                var g = Gpixels[1 + aoffset];
+                var b = Gpixels[2 + aoffset];
+
+                var aval = Math.sqrt(Math.pow(r, 2) + Math.pow(g, 2) + Math.pow(b, 2))/442.0;
+                aval = aval*2.5*2.0/10.0;
+                res = res + aval;
+            }
+            //else alert ("Not Gloaded");
+            return res;
+        }
 
 		/**
 		 * Handles the event of zooming in on our object by intercepting the wheel signal
@@ -622,19 +830,23 @@
 		 *
 		 * @param event
 		 */
-		function zoom(event) {
+		// renamed to speed() - this should be adjusted by the mouse scroll UpScroll - Forward & DnScroll - Backward
+		function speed(event) {
 			// Stop the whole window from scrolling when we're on the canvas
 			event.preventDefault();
 
+            speed = speed + event.deltaY/100000.0; // TODO: Test this out in other computers as Mac controls are inverted
+            //console.log(speed); // This would need to be overridden by the press of a key button (either 'W' or 'S')
+
 			// Need to invert our direction so that it's more intuitive of a zoom
-			cameraZoom -= event.deltaY * 0.05;
+			/*cameraZoom -= event.deltaY * 0.05;
 
 			// Set distance limits otherwise the object wraps around (and goes upside down)
 			if (cameraZoom >= 150) {
 				cameraZoom = 150; // This is arbitrary
 			}  else if (cameraZoom <= 1) {
 				cameraZoom = 1; // Just before the object "disappears"
-			}
+			}*/
 		}
 	</script>
 </head>

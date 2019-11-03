@@ -21,7 +21,10 @@
 		void main(void) {
 			vec4 tx_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
 			// select color and simply scale by the lighint from ambient and direction.
-			vec3 acolor; acolor[0] = 0.5; acolor[1] = 0.5; acolor[2] = 0.5;
+			vec3 acolor;
+			acolor[0] = 0.5;
+			acolor[1] = 0.5;
+			acolor[2] = 0.5;
 			gl_FragColor = vec4(tx_FragColor.rgb * vLightWeighting, tx_FragColor.a);
 		}
 	</script>

@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
-	<title>WebGL Assignment 2</title>
+	<title>WebGL Assignment 4</title>
 	<meta name="generator" content="BBEdit 10.5" />
 
+    <link rel="stylesheet" href="A4_styles.css">
 	<script type="text/javascript" src="glMatrix_util.js"></script>
 	<script type="text/javascript" src="webgl-utils.js"></script>
 	<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
@@ -857,14 +858,28 @@
 <!-- declare the "body" of the HTML document-->
 <!-- the onload attribute specifies a javascript function to execute when the body tag is loaded into the browser -->
 
-<body onload="startHelloWebGL()">
-	<h1>Jaime Guevara, CS-464 Assignment 3</h1>
+<body onload="startHelloWebGL()" style="width: 100%;">
+	<h1>Jaime Guevara, CS-464 Assignment 4</h1>
 
 	<!-- embed the HTML5 Canvas Drawing object on the page.-->
 	<!-- Name the canvas 'hellowebgl' for the javascript code. -->
 	<canvas id="hellowebgl" width=640 height=480>
 	If you're seeing this your web browser doesn't support the &lt;canvas>&gt; element. Ouch!
 	</canvas>
+
+	<div id="shader-controls" style="width: 10%;">
+		<fieldset>
+			<legend>Shader Controls:</legend>
+            <label for="phong-shader"><b>Phong Shader:</b></label>
+            <input type="radio" name="shader-selector" id="phong-shader" value=""><br>
+
+            <label for="flat-shading"><b>Flat Shader:</b></label>
+            <input type="radio" name="shader-selector" id="flat-shading" value="" checked><br>
+
+            <label for="gouraud-shading"><b>Gouraud Shader:</b></label>
+            <input type="radio" name="shader-selection" id="gouraud-shading" value="">
+		</fieldset>
+	</div>
 
 	</body>
 </html>

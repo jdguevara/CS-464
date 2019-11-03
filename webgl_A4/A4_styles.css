@@ -8,5 +8,34 @@ label {
     width: 130px;
     margin: 0;
     text-align: right;
-    color: #222;
+    color: #444;
+}
+
+#view-options {
+    width: 35%;
+    display: flex;
+}
+
+#shader-controls {
+    width: 25%;
+}
+
+#shader-controls label {
+    display: inline-block;
+    width: 110px;
+    margin: 0;
+    text-align: right;
+    color: #444;
+}
+
+#lighting-controls {
+    width: 35%;
+}
+
+#lighting-controls label {
+    display: inline-block;
+    width: 160px;
+    margin: 0;
+    text-align: right;
+    color: #444;
 }

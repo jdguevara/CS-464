@@ -867,19 +867,35 @@
 	If you're seeing this your web browser doesn't support the &lt;canvas>&gt; element. Ouch!
 	</canvas>
 
-	<div id="shader-controls" style="width: 10%;">
-		<fieldset>
-			<legend>Shader Controls:</legend>
-            <label for="phong-shader"><b>Phong Shader:</b></label>
-            <input type="radio" name="shader-selector" id="phong-shader" value=""><br>
+    <div id="view-options">
+        <div id="shader-controls">
+            <fieldset>
+                <legend><b>Shader Controls:</b></legend>
+                <label for="phong-shader">Phong Shader:</label>
+                <input type="checkbox" name="shader-selector" id="phong-shader" value=""><br>
 
-            <label for="flat-shading"><b>Flat Shader:</b></label>
-            <input type="radio" name="shader-selector" id="flat-shading" value="" checked><br>
+                <label for="flat-shading">Flat Shader:</label>
+                <input type="checkbox" name="shader-selector" id="flat-shading" value="" checked><br>
 
-            <label for="gouraud-shading"><b>Gouraud Shader:</b></label>
-            <input type="radio" name="shader-selection" id="gouraud-shading" value="">
-		</fieldset>
-	</div>
+                <label for="gouraud-shading">Gouraud Shader:</label>
+                <input type="checkbox" name="shader-selection" id="gouraud-shading" value="">
+            </fieldset>
+        </div>
+
+        <div id="lighting-controls">
+            <fieldset>
+                <legend><b>Lighting Controls:</b></legend>
+                <label for="ambient-lighting">Ambient Lighting:</label>
+                <input type="radio" name="lighting-selection" id="ambient-lighting" value="" checked><br>
+
+                <label for="diffuse-lighting">Diffuse Lighting:</label>
+                <input type="radio" name="lighting-selection" id="diffuse-lighting" value=""><br>
+
+                <label for="phong-secular-lighting">Phong/Secular Lighting:</label>
+                <input type="radio" name="lighting-selection" id="phong-secular-lighting">
+            </fieldset>
+        </div>
+    </div>
 
 	</body>
 </html>

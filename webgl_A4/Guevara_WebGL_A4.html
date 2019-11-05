@@ -662,6 +662,14 @@
             gl.useProgram(shaderProgram);
             gl.uniform1i(shaderProgram.shaderOption, shader.value);
         }
+        var shaderBoxes = document.querySelectorAll('input[name="shader-selector"]');
+        var i = 0;
+        shaderBoxes.forEach(function (entry) {
+            if (entry.checked == true && entry.value != shader.value) {
+                shaderBoxes[i].checked = false;
+            }
+            i++;
+        });
     }
     </script>
 
@@ -690,7 +698,7 @@
                 <input type="checkbox" name="shader-selector" id="flat-shading" value="1" checked onclick="setShaderValue(this);"><br>
 
                 <label for="gouraud-shading">Gouraud Shader:</label>
-                <input type="checkbox" name="shader-selection" id="gouraud-shading" value="3" onclick="setShaderValue(this);">
+                <input type="checkbox" name="shader-selector" id="gouraud-shading" value="3" onclick="setShaderValue(this);">
             </fieldset>
         </div>
 

@@ -201,10 +201,10 @@
     var pMatrix = mat4.create();
 
     // Geometry buffers (vertices positions, texture coordinates, indices)
-    var vertexPositionBuffer;
+    /*var vertexPositionBuffer;
     var normalVertexBuffer;
     var vertexTextureCoordBuffer;
-    var vertexIndexBuffer;
+    var vertexIndexBuffer;*/
 
     // Texture variable
     var exTexture;
@@ -219,6 +219,7 @@
     var drag = false;
 
     var shaderOption;
+    var lightingOption;
 
     function initWebGLContext(aname) {
         gl = null;
@@ -325,6 +326,7 @@
 
         // Shader Option Linking
         shaderProgram.shaderOption = gl.getUniformLocation(shaderProgram, "shaderOption");
+        shaderProgram.shaderOption = gl.getUniformLocation(shaderProgram, "lightingOption");
     }
 
 
@@ -658,11 +660,14 @@
     // document.getElementById('flat-shading').addEventListener("click", getValue);
 
     function setShaderValue(shader) {
-        if (shader.checked) {
-            gl.useProgram(shaderProgram);
-            gl.uniform1i(shaderProgram.shaderOption, shader.value);
-            // console.log(shader.value);
-        }
+        gl.useProgram(shaderProgram);
+        gl.uniform1i(shaderProgram.shaderOption, shader.value);
+        // console.log(shader.value);
+    }
+
+    function setLightingValue(lighting) {
+        gl.useProgram(shaderProgram);
+        gl.uniform1i(shaderProgram.lightingOption, lighting.value);
     }
     </script>
 
@@ -699,13 +704,13 @@
             <fieldset>
                 <legend><b>Lighting Controls:</b></legend>
                 <label for="ambient-lighting">Ambient Lighting:</label>
-                <input type="radio" name="lighting-selection" id="ambient-lighting" value="" checked><br>
+                <input type="radio" name="lighting-selection" id="ambient-lighting" value="1" checked onclick="setLightingValue(this)"><br>
 
                 <label for="diffuse-lighting">Diffuse Lighting:</label>
-                <input type="radio" name="lighting-selection" id="diffuse-lighting" value=""><br>
+                <input type="radio" name="lighting-selection" id="diffuse-lighting" value="2" onclick="setLightingValue(this)"><br>
 
                 <label for="phong-secular-lighting">Phong/Secular Lighting:</label>
-                <input type="radio" name="lighting-selection" id="phong-secular-lighting">
+                <input type="radio" name="lighting-selection" id="phong-secular-lighting" value="3" onclick="setLightingValue(this)">
             </fieldset>
         </div>
     </div>

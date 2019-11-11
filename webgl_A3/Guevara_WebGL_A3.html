@@ -288,7 +288,6 @@
             var vertices = [];
             var normalVertices = []; // Normal vertices for lighting
 
-            // Set up 100 x 100 Grid // TODO: This should be set to the size of the texture
             for (var i = 0; i < 256; i++) {
                 for (var j = 0; j < 256; j++) {
                     vertices[0 + (j*3) + (i*256*3)] = (j*1.0)/50.0 - 1.0; // x-axis vertices
@@ -337,13 +336,13 @@
             // The indices need to just go up to the point before everything wraps
             for (i = 0; i < 255; i++) {
                 for (j = 0; j < 255; j++) {
-                    vertexIndices[tVertIndex++] = j + (i*256);
-                    vertexIndices[tVertIndex++] = j + 1 + (i*256);
-                    vertexIndices[tVertIndex++] = j + ((i + 1) * 256);
+					vertexIndices[tVertIndex++] = 0 + j + i * 256;
+					vertexIndices[tVertIndex++] = 1 + j + i * 256;
+					vertexIndices[tVertIndex++] = 0 + j + (i + 1) * 256;
 
-                    vertexIndices[tVertIndex++] = j + i*256;
-                    vertexIndices[tVertIndex++] = j + 1 + (i+1)*256;
-                    vertexIndices[tVertIndex++] = j + (i+1)*256;
+					vertexIndices[tVertIndex++] = 0 + j + (i+1) * 256;
+					vertexIndices[tVertIndex++] = 1 + j + (i+1) * 256;
+					vertexIndices[tVertIndex++] = 1 + j + i * 256;
                 }
             }
             gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(vertexIndices), gl.STATIC_DRAW);
@@ -650,7 +649,7 @@
             cameraTranslate[2] = cameraTranslate[2] + (speed * eyepos[2]); // This is the z-direction
 
             //adjust the height based on the terrain
-            cameraTranslate[1] = getTerHeight(cameraTranslate[0],cameraTranslate[2]);; // Y-direction
+            cameraTranslate[1] = getTerHeight(cameraTranslate[0],cameraTranslate[2]); // Y-direction
 
             // get Normal for current position
             var curNormal = getNormal(cameraTranslate[0],cameraTranslate[2]);
@@ -659,7 +658,7 @@
             eyepos = getCameraDirection(curNormal);
 
             // now we compute the point the camera is looking at
-            var target = [0.0, 0.0, 0.0];  // Camera looking straight down Z axis
+            var target = [0.0, 1.0, 0.0];  // Camera looking straight down Z axis
             target[0] = cameraTranslate[0] + eyepos[0]; // X-direction
             target[1] = cameraTranslate[1] + eyepos[1]/50.0; // Y-direction
             target[2] = cameraTranslate[2] + eyepos[2]; // Z-direction

@@ -15,42 +15,57 @@
 
         varying vec2 vTextureCoord;
         varying vec3 vLightWeighting;
-        varying vec3 vDiffuseLightWeighting;
-        varying vec3 vSpecularLightWeighting;
-        varying vec3 localNormal;
-        varying vec3 lightNormal;
-        varying vec3 vertPos;
-        vec3 ambientLightIntensity;
-        vec3 lightIntensity;
-        vec3 lightDirection;
-
-        uniform vec3 uAmbientColorFS;
-        uniform vec3 uLightingDirectionFS;
-        uniform vec3 uDirectionalColorFS;
 
         uniform sampler2D uSampler;
+
         uniform int clrSource;
         uniform int shaderOption;
-        uniform int lightingOption;
-        uniform bool bumpBool;
+        //uniform int lightingOption;
+        //uniform bool bumpBool;
 
-        vec4 tx_FragColor;
+        float rand(vec2 co) {
+            return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 31993.19);
+        }
+
+        float ramp(vec2 co) {
+            return ((co.x * co.y) * 1.123456789)*0.75;
+        }
 
         void main(void) {
-            // Ambient Lighting
-            if (lightingOption == 1) {
-                tx_FragColor = vec4(.0, .6, .9, .01);
-            }
+            vec4 tx_FragColor;
+            float ts = vTextureCoord.s;
+            float tt = vTextureCoord.t;
 
             // Flat Shading
             if (shaderOption == 1) {
-                float ts = vTextureCoord.s;
-                float tt = vTextureCoord.t;
                 ts = (floor(ts*64.0))/64.0;
                 tt = (floor(tt*64.0))/64.0;
-                tx_FragColor = texture2D(uSampler, vec2(ts, tt));
-                gl_FragColor = vec4(tx_FragColor.rgb * vLightWeighting, tx_FragColor.a);
             }
+            if (shaderOption == 2) { // Phong
+                ts = (floor(ts*1028.0))/1028.0;
+                tt = (floor(tt*1028.0))/1028.0;
+            } // Gouraud
+            if (shaderOption == 3) {
+                
+            }
+
+            if (clrSource == 1) { // Texture
+                tx_FragColor = texture2D(uSampler, vec2(ts, tt));
+            } else if (clrSource == 3) { // Random color
+                float r, g, b;
+                r = rand(vTextureCoord);
+                g = r;
+                b = r;
+                tx_FragColor = vec4(r,g,b,1.0);
+            } else if (clrSource == 2) { // Math function
+                float r, g, b; // If these are modified we change the values of our light color
+                r = 1.25;
+                g = ramp(vTextureCoord);
+                b = r * 0.5;
+                tx_FragColor = vec4(r, g, b, 1.0);
+            }
+
+            gl_FragColor = vec4(tx_FragColor.rgb * vLightWeighting, tx_FragColor.a);
         }
     </script>
     <script id="shader-vs" type="x-shader/x-vertex">
@@ -62,7 +77,11 @@
 		uniform mat4 uPMatrix;
 
 		varying vec2 vTextureCoord;
-		varying vec3 tNormal;
+		varying vec3 nVertexPosition;
+		varying vec3 nNormalPosition;
+		uniform sampler2D uSampler;
+		varying vec4 clrVec;
+		varying vec4 nclrVec;
 
 		// lighting components
 		uniform mat3 uNMatrix;
@@ -71,12 +90,30 @@
 		uniform vec3 uDirectionalColor; // color of directional light
 		varying vec3 vLightWeighting;
 
+        uniform int lightingOption;
+        uniform int bumpBool;
 		void main(void) {
+		    nNormalPosition[0] = aVertexNormal[0];
+		    nNormalPosition[1] = 1.0;
+		    nNormalPosition[2] = aVertexNormal[2];
 		    vTextureCoord = aTextureCoord;
-			tNormal = vec4(aVertexNormal, 0.0).xyz;
-			float directionalLightWeighting = max(dot(tNormal, uLightingDirection), 0.0);
-			vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;
-			gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+		    clrVec = texture2D(uSampler, vTextureCoord);
+		    nclrVec = normalize(clrVec);
+		    nNormalPosition[1] = sqrt(nclrVec[0] * nclrVec[0] + nclrVec[1]*nclrVec[1] + nclrVec[2]*nclrVec[2]);
+		    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+
+		    vec3 testNormal = aVertexNormal;
+		    if (bumpBool == 1) {
+		        testNormal = nNormalPosition;
+		    }
+		    float directionalLightWeighting = max(dot(testNormal, uLightingDirection), 0.0);
+		    vLightWeighting = uAmbientColor;
+		    if (lightingOption == 2) {
+		        vLightWeighting += uDirectionalColor;
+		    }
+		    if (lightingOption == 3) {
+		        vLightWeighting += uDirectionalColor * directionalLightWeighting;
+		    }
 		}
 	</script>
 
@@ -140,7 +177,7 @@
     // define the function to initial WebGL and Setup Geometry Objects
     function initGLScene()
     {
-        console.log("hello");
+        // console.log("hello");
         // Initialize the WebGL Context - the gl engine for drawing things.
         var gl = initWebGLContext("hellowebgl"); // The id of the Canvas Element
         if (!gl) // if fails simply return
@@ -231,7 +268,8 @@
         // Give our shaders an initial option value
         gl.uniform1i(shaderProgram.shaderOption, 1);
         gl.uniform1i(shaderProgram.lightingOption, 1);
-        gl.uniform1i(shaderProgram.booleanValue, 0);
+        gl.uniform1i(shaderProgram.colorSource, 1);
+        gl.uniform1i(shaderProgram.bumpBool, 0);
     }
 
 
@@ -272,7 +310,7 @@
                 vertices[1 + j * 3 + i * 100 * 3] = 0;// Math.random()/10.0; // y-axis vertices
                 vertices[2 + j * 3 + i * 100 * 3] = (i*1.0)/50 - 1; // z-axis vertices
 
-                normalVertices[0 + j*3 + (i*100*3)] = 0; // Lighting is 0 in the x-direction
+                normalVertices[0 + j*3 + (i*100*3)] = 1; // Lighting is 0 in the x-direction
                 normalVertices[1 + j*3 + (i*100*3)] = 1; // Lighting is 1 in the y-direction
                 normalVertices[2 + j*3 + (i*100*3)] = 0; // Lighting is 0 in the z-direction
             }
@@ -432,23 +470,18 @@
         );
 
         // Which way will our light come from? Well we can set it from here
-        gl.uniform3f(
-            shaderProgram.lightingDirectionUniform,
-            0.5,
-            0.5,
-            0.5
-        );
+        var lightingDirection = [0.0, -2.0, 0.0];
 
         // Adjust the color direction
         var adjustedLD = vec3.create();
-        vec3.normalize(shaderProgram.lightingDirectionUniform, adjustedLD);
+        vec3.normalize(lightingDirection, adjustedLD);
         vec3.scale(adjustedLD, -1);
         gl.uniform3fv(shaderProgram.lightingDirectionUniform, adjustedLD);
         gl.uniform3f(
             shaderProgram.directionalColorUniform,
-            0.9,
-            0.9,
-            0.9
+            0.7,
+            0.7,
+            0.7
         );
 
         // Finish binding lights to buffer
@@ -546,10 +579,12 @@
     function setLightingValue(lighting) {
         // gl.useProgram(shaderProgram);
         gl.uniform1i(shaderProgram.lightingOption, lighting.value);
+        console.log(lighting.value);
     }
 
     function setBumpBoolean(bool) {
         if (bool.checked) {
+            console.log('hello');
             gl.uniform1i(shaderProgram.bumpBool, 1);
         } else {
             gl.uniform1i(shaderProgram.bumpBool, 0);
@@ -559,7 +594,7 @@
 
     function setColorSource(texture) {
         gl.uniform1i(shaderProgram.colorSource, texture.value);
-        // console.log(texture.value);
+        console.log(texture.value);
     }
     </script>
 
@@ -602,7 +637,7 @@
             <select id="lighting-selection" onclick="setLightingValue(this)">
                 <option value="1">Ambient Lighting</option>
                 <option value="2">Diffuse Lighting</option>
-                <option value="3">Specular Lighting</option>
+                <option value="3">Phong Lighting</option>
             </select>
         </div>
         <div id="bump-map-selection">

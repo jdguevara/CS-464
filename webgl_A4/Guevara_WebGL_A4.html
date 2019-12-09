@@ -46,7 +46,7 @@
                 tt = (floor(tt*1028.0))/1028.0;
             } // Gouraud
             if (shaderOption == 3) {
-                
+
             }
 
             if (clrSource == 1) { // Texture
@@ -130,15 +130,8 @@
     // Projection matrix
     var pMatrix = mat4.create();
 
-    // Geometry buffers (vertices positions, texture coordinates, indices)
-    /*var vertexPositionBuffer;
-    var normalVertexBuffer;
-    var vertexTextureCoordBuffer;
-    var vertexIndexBuffer;*/
-
     // Texture variable
     var exTexture;
-    var fxTexture;
 
     // Variables for handling object rotation across each axis as well as our perspective
     var xRot = 0;
@@ -148,9 +141,6 @@
 
     // This helps to determine if our mouse is allowed to drag the object or not
     var drag = false;
-
-    /*var shaderOption;
-    var lightingOption;*/
 
     function initWebGLContext(aname) {
         gl = null;
@@ -177,7 +167,6 @@
     // define the function to initial WebGL and Setup Geometry Objects
     function initGLScene()
     {
-        // console.log("hello");
         // Initialize the WebGL Context - the gl engine for drawing things.
         var gl = initWebGLContext("hellowebgl"); // The id of the Canvas Element
         if (!gl) // if fails simply return
@@ -307,10 +296,10 @@
         for (var i = 0; i < 100; i++) {
             for (var j = 0; j < 100; j++) {
                 vertices[0 + j * 3 + i * 100 * 3] = (j*1.0)/50 - 1.0; // x-axis vertices
-                vertices[1 + j * 3 + i * 100 * 3] = 0;// Math.random()/10.0; // y-axis vertices
+                vertices[1 + j * 3 + i * 100 * 3] = Math.random()/50.0; // y-axis vertices // TODO: Maybe look at getting the height based on the brightness of that spot
                 vertices[2 + j * 3 + i * 100 * 3] = (i*1.0)/50 - 1; // z-axis vertices
 
-                normalVertices[0 + j*3 + (i*100*3)] = 1; // Lighting is 0 in the x-direction
+                normalVertices[0 + j*3 + (i*100*3)] = 0; // Lighting is 0 in the x-direction
                 normalVertices[1 + j*3 + (i*100*3)] = 1; // Lighting is 1 in the y-direction
                 normalVertices[2 + j*3 + (i*100*3)] = 0; // Lighting is 0 in the z-direction
             }
@@ -376,12 +365,8 @@
             handleLoadedTexture(exTexture);
         };
 
-        /*fxTexture.image.onload = function() {
-            handleLoadedTexture(fxTexture);
-        };*/
-
         // exTexture.image.src = 'gold.png';
-        exTexture.image.src = "box.png"; // Original box texture
+        exTexture.image.src = "terrain.png"; // Original box texture
     }
 
     function handleLoadedTexture(texture)
@@ -491,10 +476,6 @@
         // gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
         gl.drawElements(gl.TRIANGLES, vertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
         mat4.translate(mvMatrix, [0.0, 1.0, 0.0]);
-
-        /*gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
-        setMatrixUniforms();
-        gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);*/
     }
 
 
@@ -518,8 +499,7 @@
     }
 
     /**
-     * Sets permission for dragging our object if mouse button is clicked
-     * TODO: In the event handler try to make it so that it only recognizes the left mouse button for this
+     *  Sets permission for dragging our object if mouse button is clicked
      */
     function canvasClick() {
         drag = true;
@@ -571,15 +551,11 @@
     }
 
     function setShaderValue(shader) {
-        // gl.useProgram(shaderProgram);
         gl.uniform1i(shaderProgram.shaderOption, shader.value);
-        // console.log(shaderProgram.shaderOption);
     }
 
     function setLightingValue(lighting) {
-        // gl.useProgram(shaderProgram);
         gl.uniform1i(shaderProgram.lightingOption, lighting.value);
-        console.log(lighting.value);
     }
 
     function setBumpBoolean(bool) {
@@ -589,7 +565,6 @@
         } else {
             gl.uniform1i(shaderProgram.bumpBool, 0);
         }
-        // console.log(bool.checked);
     }
 
     function setColorSource(texture) {

@@ -7,7 +7,6 @@
 
 	<script type="text/javascript" src="glMatrix_util.js"></script>
 	<script type="text/javascript" src="webgl-utils.js"></script>
-	<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
 
 	<!-- define our shaders -->
 	<script id="shader-fs" type="x-shader/x-fragment">
@@ -207,6 +206,9 @@
 			shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
 			gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
+			shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal");
+			gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
+
 			shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram, "aTextureCoord");
 			gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
 
@@ -317,9 +319,9 @@
 					vertexIndices[tVertIndex++] = j + 1 + (i*100);
 					vertexIndices[tVertIndex++] = j + ((i + 1) * 100);
 
-					vertexIndices[tVertIndex++] = j + i*100;
-					vertexIndices[tVertIndex++] = j + 1 + (i+1)*100;
-					vertexIndices[tVertIndex++] = j + (i+1)*100;
+					vertexIndices[tVertIndex++] = 0 + j + (i+1) * 100;
+					vertexIndices[tVertIndex++] = 1 + j + (i+1) * 100;
+					vertexIndices[tVertIndex++] = 1 + j + i * 100;
 				}
 			}
 			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(vertexIndices), gl.STATIC_DRAW);
@@ -336,7 +338,7 @@
 			exTexture.image = new Image();
 			exTexture.image.onload = function() {
 				handleLoadedTexture(exTexture)
-			};
+			}
 
 			exTexture.image.src = "box.png";
 		}
@@ -375,13 +377,12 @@
 			gl.clearColor(0.4,0.4,0.4,1.0); // Set background to sky blue - JG
 			gl.enable(gl.DEPTH_TEST);
 
-			// Add event listeners for when the mouse is no longer on our canvas prior to calling our Frames
-			document.addEventListener('mouseup', canvasUnclick);
-			document.addEventListener('mousemove', rotateObject);
-
-			// TODO: Try to implement a flag that checks to see if the image for our texture has been loaded prior to drawing
 			// Draw the Scene
 			Frames();
+
+			// Add event listeners for when the mouse is no longer on our canvas
+			document.addEventListener('mouseup', canvasUnclick);
+			document.addEventListener('mousemove', rotateObject)
 		}
 
 		/**
@@ -405,8 +406,8 @@
 			mat4.translate(mvMatrix, [0.0, 0.0, -5.0]);
 
 			// Handle rotation in the specified matrices (convert to radians and specify axis)
-			mat4.rotate(mvMatrix, xRot / 45.0 * 3.1415, [0, 1, 0]); // If we move our mouse in the x-direction, rotate around Y
-			mat4.rotate(mvMatrix, yRot / 45.0 * 3.1415, [1, 0, 0]); // If we move our mouse in the y-direction, rotate around X
+			mat4.rotate(mvMatrix, xRot / 180.0 * 3.1415, [0, 1, 0]); // If we move our mouse in the x-direction, rotate around Y
+			mat4.rotate(mvMatrix, yRot / 180.0 * 3.1415, [1, 0, 0]); // If we move our mouse in the y-direction, rotate around X
 
 			// Bind the buffer to our context
 			gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
@@ -448,9 +449,9 @@
 			gl.uniform3fv(shaderProgram.lightingDirectionUniform, adjustedLD);
 			gl.uniform3f(
 					shaderProgram.directionalColorUniform,
-					0.0,
-					2.0,
-					0.0
+					0.7,
+					0.7,
+					0.7
 			);
 
 			// Finish binding lights to buffer
@@ -537,5 +538,5 @@
 	If you're seeing this your web browser doesn't support the &lt;canvas>&gt; element. Ouch!
 	</canvas>
 
-	</body>
+	</body onload="startHelloWebGL()">
 </html>

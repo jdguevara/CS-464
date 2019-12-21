@@ -1,0 +1,64 @@
+Jaime Guevara
+Christian Remwood
+CS-464: Computer Graphics
+Fall 2019
+
+Final Project Report
+
+Overview
+    The goal of this project at a high level is pretty straight forward. We wanted to create a miniature
+    model clock tower that would tell you the current real time. We also wanted a scene that would react
+    to the time of day casting proper lighting and changing the color of the sky based off the time of day.
+    We also aimed to include several other models all with their own geometry and textures and world positions. 
+    Lastly, because people dont have 24 hours to observe the full animation, we needed a button to compress
+    a full day into a short span of time. Th
+
+Development process
+    When going into this project it became apparent that some kind of automated resource management was
+    a must. Handling one object at a time in a scene was difficult enough, so adding multiple all with 
+    their own code and draw cycles would have been a nightmare. Because of this it was an absolute must
+    for us to create an object class which could handle all of its draw functionality with minimal setup 
+    from the development side. This object was able to bind textures, geometry, scaling factors, animations,
+    world coordinates, and probably a few other things I can't remember at the moment. An array was then created
+    which would have these objects pushed to on creation so our draw function could simply iterate through each
+    object and draw them one at a time. After getting this set up we simply had to create and bind animations,
+    place objects, animate the lighting effects, and handle user interactions.
+
+Animations
+    When creating the objects binding animations was always a plan, but keeping things generic was a must
+    to work effectively. We had to research how function pointers worked in javascript as well as how to call
+    them. Because scope is passed through function calls in javascript we could assume certain object variables
+    would be accessible meaning any animation function could be bound to any object to be called just before drawing
+    the object. Because the draw call assumed all objects had an animation, the default animation was simply a call
+    to a function that did nothing. We then simply tinkered with all of our animations until the world lined up
+    with what we had envisioned. 
+
+Modeling
+    The models that we used for the project were created using the open-source 3D graphics software, Blender.
+    Using Blender allowed us to sculpt and form the models in a more "normal" way, creating the model and then
+    transferring the necessary data to WebGL for rendering. In order to do this however, we had to save the
+    models into an object (.obj) file. Then using the assimp2json file from https://github.com/acgessler/assimp2json
+    we were able to get arrays from the object file, each of which corresponded to various model attributes, such as:
+    indices, vertices, normals, etc. each of which helped to build the scene in WebGL by cutting down on the time
+    that we would've otherwise needed in order to code each object face/surface.
+
+World layout
+    World layout was done by importing the objects after they had been processed from .obj to .json format.
+    The Object.js file was the main work horse for making this happen. Models were easily imported through
+    the use of the aforementioned JSON files. Indices were then transformed by translating them based on
+    X, Y, and Z-axis offsets which allowed for positioning of the models after they were imported into the
+    buffer. If the models were too large, or maybe too small, the indices for them were also scaled by an
+    additional "scaling factor" which was applied via multiplication to each index's original value. This kept
+    the model scaled uniformly, therefore when textures were applied none of the models looked stretch out as
+    they had when trying to extrude surfaces via Blender. Positioning, and scaling models in this fashion allowed us
+    to build up our world through the use of the "if it looks right, it is right" mantra.
+
+Conclusion
+    This project was a great exercise in what can be done with WebGL, not just of what we learned in class, by allowing
+    us to explore the use of other technologies in conjunction with WebGL. Modeling and model creation was by far the
+    easiest part of this whole project. However, the challenge came later in introducing multiple models, applying
+    textures to the models and lighting the scene accordingly. However, once these challenges were simplified to be
+    done by function calls applicable to all scene objects, everything became a matter of perspective and almost playing
+    with the tools at our disposal in order to bring about the vision that we had for this project. In fact, we had so
+    much fun with this project that we ended up making multiple clock tower models, and even inserting a small easter
+    egg into the scene.

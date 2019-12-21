@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<!-- start chrome --disable-web-security --user-data-dir file://C:/webgl/Final/CS464Final/html/Final_Project.html -->
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Final Project</title>
+    <meta name="generator" content="BBEdit 10.5" />
+    <!-- load matrix manipulation helper methods -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script type="text/javascript" src="js/glMatrix_util.js"></script>
+    <script type="text/javascript" src="js/webgl-utils.js"></script>
+    <script type="text/javascript" src="js/util.js"></script>
+    <script type="text/javascript" src="js/Object.js"></script>
+    <script type="text/javascript" src="js/globals.js"></script>
+    <script type="text/javascript" src="js/User_Interaction.js"></script>
+    <script type="text/javascript" src="js/Matrix_functions.js"></script>
+    <script type="text/javascript" src="js/Geometry_functions.js"></script>
+    <script type="text/javascript" src="js/Texture_functions.js"></script>
+    <script type="text/javascript" src="js/Shader_functions.js"></script>
+    <script type="text/javascript" src="js/ObjectFunctions.js"></script>
+    <script type="text/javascript" src="js/Environment.js"></script>
+    <script type="text/javascript" src="js/Draw.js"></script>
+    <script type="text/javascript" src="js/Webgl_init_functions.js"></script>
+    <!-- define our shaders -->
+    <script id="shader-fs" type="x-shader/x-fragment">
+        precision mediump float;
+    
+        varying vec2 vTextureCoord;
+        varying vec3 vLightWeighting; // rgb color from lights.
+    
+        uniform sampler2D uSampler;
+    
+        uniform int sourceCLR;
+        uniform int shadingCLR;
+        //uniform int lightingCLR;
+    
+        float rand(vec2 co){
+            return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+        }
+    
+        float ramp(vec2 co){
+            return ((co.x * co.y) * 1.123456789)*0.75;
+        }
+    
+        void main(void) {
+            vec4 tx_FragColor;
+            float ts = vTextureCoord.s;
+            float tt = vTextureCoord.t;
+            if(shadingCLR == 1)
+            {
+                ts = (floor(ts*64.0))/64.0;
+                tt = (floor(tt*64.0))/64.0;
+            }
+            if(shadingCLR == 2)
+            {
+                //ts = (floor(ts*64.0))/64.0;
+                //tt = (floor(tt*64.0))/64.0;
+            }
+            if(shadingCLR == 3)
+            {
+                ts = (floor(ts*1028.0))/1028.0;
+                tt = (floor(tt*1028.0))/1028.0;
+            }
+            
+            if(sourceCLR == 1)
+            {
+                tx_FragColor = texture2D(uSampler, vec2(ts, tt));
+            }
+            else if(sourceCLR == 2)
+            {
+                float R,G,B;
+                R = ramp(vTextureCoord)*1.25;
+                G = R*.2;
+                B = R*.5;
+                tx_FragColor = vec4(R,G,B,1.0);
+            }
+            else if(sourceCLR == 3)
+            {
+                float R,G,B;
+                R = rand(vTextureCoord);
+                G = R;
+                B = R;
+                tx_FragColor = vec4(R,G,B,1.0);
+                
+            }
+            else if(sourceCLR == 4)
+            {
+                tx_FragColor = vec4(.25,.5,.25,1.0);
+            }
+            gl_FragColor = vec4(tx_FragColor.rgb * vLightWeighting, tx_FragColor.a);
+        }
+        </script>
+    
+        <script id="shader-vs" type="x-shader/x-vertex">
+        attribute vec3 aVertexPosition;
+        attribute vec3 aVertexNormal;
+        attribute vec2 aTextureCoord;
+    
+        uniform mat4 uMVMatrix;
+        uniform mat4 uPMatrix;
+    
+        varying vec2 vTextureCoord;
+        varying vec3 nVertexPosition;
+        varying vec3 nNormalPosition;
+        uniform sampler2D uSampler;
+        varying vec4 clrVec;
+        varying vec4 nclrVec;
+        
+        
+        // lighting components
+        uniform mat3 uNMatrix;
+        uniform vec3 uAmbientColor;  // ambient light
+        uniform vec3 uLightingDirection; // directional light
+        uniform vec3 uDirectionalColor; // color of directional light
+        varying vec3 vLightWeighting;
+    
+        //uniform int sourceCLR;
+        //uniform int shadingCLR;
+        uniform int lightingCLR;
+        uniform int bumpCLR;
+        void main(void) {
+            // modify the height of the terrain 
+            nNormalPosition[0] = aVertexNormal[0];
+            nNormalPosition[1] = 1.0;
+            nNormalPosition[2] = aVertexNormal[2];
+            vTextureCoord = aTextureCoord;
+            clrVec = texture2D(uSampler,vTextureCoord);
+            nclrVec = normalize(clrVec);
+            nNormalPosition[1] = sqrt(nclrVec[0]*nclrVec[0]*10.0 + nclrVec[1]*nclrVec[1]+nclrVec[2]*nclrVec[2]);
+            gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+           
+            // here we calculate the lighting information from vertex.
+            vec3 testNormal = aVertexNormal;
+            if (bumpCLR == 1)
+            {
+                testNormal = nNormalPosition;
+            }
+           float directionalLightWeighting = max(dot(testNormal, uLightingDirection), 0.0);
+           vLightWeighting = uAmbientColor;
+           if (lightingCLR == 2)
+            {
+                vLightWeighting += uDirectionalColor;
+            }
+            if (lightingCLR == 3)
+            {
+                vLightWeighting += uDirectionalColor * directionalLightWeighting;
+            }
+        }
+        
+        </script>
+    <!-- define Javascript functions for drawing WebGL items -->
+</head>
+<!-- declare the "body" of the HTML document-->
+<!-- the onload attribute specifies a javascript function to execute when the body tag is loaded into the browser -->
+
+<body onload="webgl_init()">
+    <p>Webgl Final Project</p>
+    <p>Click and Drag to rotate</p>
+    <p>Scroll mouse wheel to zoom</p>
+    <select id="sourceCLR">
+        <option value="texture">Texture</option >
+        <option value="math" >Math</option >
+        <option value="random" >Random</option >
+        <option value="solid" >Color</option >
+    </select >
+    <select id="shadingCLR">
+        <option value="flat">Flat Shading</option >
+        <option value="gouraud" >Gouraud Shading</option >
+        <option value="phong" >Phong Shading</option >
+    </select >
+    <select id="lightingCLR">
+        <option value="ambient">Ambient Lighting</option >
+        <option value="diffuse" >Diffuse Lighting</option >
+        <option value="phong" >Phong/Specular Lighting</option >
+    </select >
+    <input style="display:none ;" type="checkbox" id="bumpCLR" value="bump"><br>
+    <input type="checkbox" id="HighSpeed" value="speed"> High Speed Mode<br>
+    <input type="checkbox" id="Ground" value="speed" checked> Show Ground<br>
+    <canvas id="hellowebgl" width=720 height=480>
+        If you're seeing this your web browser doesn't support the &lt;canvas>&gt; element. Ouch!
+    </canvas>
+    <br>
+    <button onclick="openFullscreen();">Open in Fullscreen Mode</button>
+</body>
+
+<script>
+    var elem = document.getElementById("hellowebgl");
+    function openFullscreen() {
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+      } else if (elem.mozRequestFullScreen) { /* Firefox */
+        elem.mozRequestFullScreen();
+      } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+        elem.webkitRequestFullscreen();
+      } else if (elem.msRequestFullscreen) { /* IE/Edge */
+        elem.msRequestFullscreen();
+      }
+    }
+    </script>
+
+</html>

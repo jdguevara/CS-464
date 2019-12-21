@@ -1,0 +1,11 @@
+Controlls 
+
+Click and Drag to rotate
+
+Scroll mouse wheel to zoom
+
+Select texture source, shading style, or lighting style with the dropdown menus.
+
+Speed up the animation by checking the high speed checkbox
+
+Click the button labeled "open in full screen" to fill your display with the render window. 
